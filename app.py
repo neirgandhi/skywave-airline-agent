@@ -53,12 +53,19 @@ def find_alternative_flights(flight_number: str, day: str = None) -> str:
         result += f"{i}. Flight {alt['flight']} — {alt['route']}, departing {alt['departure']}, {alt['stops']}, seats: {alt['seats']}\n"
     return result
 
-def confirm_rebooking(original_flight: str, new_flight: str, booking_id: str) -> str:
+def confirm_rebooking(original_flight: str, new_flight: str, booking_id: str, seat_preference: str = None) -> str:
     booking_id = booking_id.upper()
     if booking_id in RESERVATIONS:
         RESERVATIONS[booking_id]["flight"] = new_flight
+        if seat_preference and "window" in seat_preference.lower():
+            assigned_seat = "12F"
+        elif seat_preference and "middle" in seat_preference.lower():
+            assigned_seat = "12C"
+        else:
+            assigned_seat = "12D"
+        RESERVATIONS[booking_id]["seat"] = assigned_seat
         new = FLIGHTS.get(new_flight, {})
-        return f"Rebooking confirmed. {RESERVATIONS[booking_id]['name']} has been moved from {original_flight} to {new_flight} ({new.get('route', '')}), departing {new.get('departure', '')}."
+        return f"Rebooking confirmed. {RESERVATIONS[booking_id]['name']} has been moved from {original_flight} to {new_flight} ({new.get('route', '')}), departing {new.get('departure', '')}. Assigned seat: {assigned_seat}."
     return f"Could not confirm rebooking. Reservation {booking_id} not found."
 
 tools = [
@@ -115,7 +122,8 @@ tools = [
                 "properties": {
                     "original_flight": {"type": "string", "description": "The original flight number"},
                     "new_flight": {"type": "string", "description": "The new flight number"},
-                    "booking_id": {"type": "string", "description": "The passenger booking ID"}
+                    "booking_id": {"type": "string", "description": "The passenger booking ID"},
+                    "seat_preference": {"type": "string", "description": "Seat preference: aisle, window, or middle"}
                 },
                 "required": ["original_flight", "new_flight", "booking_id"]
             }
@@ -140,9 +148,9 @@ You can look up reservations by booking ID or passenger name.
 When you find a reservation, you will also receive the customer's preferences from past bookings.
 Keep these preferences in mind throughout the conversation but do not mention them upfront.
 Only reference them explicitly when helping with flight changes, rebooking, or seat selection.
-For example: "Based on your preference for aisle seats and nonstop flights, I recommend Flight SW103."
 Never mention preferences when simply greeting the customer or confirming their reservation.
 When the customer specifies a day (today, tomorrow), always filter alternatives to that day only.
+When confirming a rebooking, always tell the customer their newly assigned seat number.
 For general questions, use the FAQ below.
 If a question is outside the FAQ and you cannot help with tools, say you are escalating to a human agent.
 If a customer is frustrated, escalate immediately with empathy.
