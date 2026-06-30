@@ -19,3 +19,24 @@ ALTERNATIVE_FLIGHTS = {
         {"flight": "SW109", "route": "New York → Los Angeles", "departure": "Tomorrow 10:00 AM", "seats": "aisle available", "stops": "nonstop", "day": "tomorrow"},
     ]
 }
+
+CUSTOMER_PREFERENCES = {
+    "SKY001": {
+        "seat_preference": "aisle",
+        "flight_preference": "nonstop",
+        "avoids": "red-eye flights (departures between 10pm and 5am)",
+        "notes": "Frequent flyer. Prefers morning or afternoon departures."
+    },
+    "SKY002": {
+        "seat_preference": "window",
+        "flight_preference": "nonstop",
+        "avoids": "early morning flights before 7am",
+        "notes": "Business class traveller. Values punctuality."
+    },
+    "SKY003": {
+        "seat_preference": "aisle",
+        "flight_preference": "any",
+        "avoids": "nothing specific",
+        "notes": "Budget conscious. Prefers cheaper options."
+    },
+}

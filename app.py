@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 from dotenv import load_dotenv
 import json
-from data import RESERVATIONS, FLIGHTS, ALTERNATIVE_FLIGHTS
+from data import RESERVATIONS, FLIGHTS, ALTERNATIVE_FLIGHTS, CUSTOMER_PREFERENCES
 
 load_dotenv()
 
@@ -16,13 +16,21 @@ def lookup_reservation(booking_id: str = None, name: str = None) -> str:
         booking_id = booking_id.upper()
         res = RESERVATIONS.get(booking_id)
         if res:
-            return f"Found reservation {booking_id}: {res['name']}, Flight {res['flight']}, Seat {res['seat']}, Class {res['class']}, Status: {res['status']}."
+            prefs = CUSTOMER_PREFERENCES.get(booking_id)
+            result = f"Found reservation {booking_id}: {res['name']}, Flight {res['flight']}, Seat {res['seat']}, Class {res['class']}, Status: {res['status']}."
+            if prefs:
+                result += f" Customer preferences — Seat: {prefs['seat_preference']}, Flight: {prefs['flight_preference']}, Avoids: {prefs['avoids']}. Notes: {prefs['notes']}"
+            return result
         return f"No reservation found for booking ID {booking_id}."
     if name:
         name_lower = name.lower()
         for bid, res in RESERVATIONS.items():
             if name_lower in res["name"].lower():
-                return f"Found reservation {bid}: {res['name']}, Flight {res['flight']}, Seat {res['seat']}, Class {res['class']}, Status: {res['status']}."
+                prefs = CUSTOMER_PREFERENCES.get(bid)
+                result = f"Found reservation {bid}: {res['name']}, Flight {res['flight']}, Seat {res['seat']}, Class {res['class']}, Status: {res['status']}."
+                if prefs:
+                    result += f" Customer preferences — Seat: {prefs['seat_preference']}, Flight: {prefs['flight_preference']}, Avoids: {prefs['avoids']}. Notes: {prefs['notes']}"
+                return result
         return f"No reservation found for name {name}."
     return "Please provide a booking ID or name."
 
@@ -58,7 +66,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "lookup_reservation",
-            "description": "Look up a customer reservation by booking ID or passenger name.",
+            "description": "Look up a customer reservation by booking ID or passenger name. Also returns customer preferences.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -129,7 +137,11 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": f"""You are a helpful customer service agent for SkyWave Airlines.
 You can look up reservations by booking ID or passenger name.
-You can check flight status, find alternative flights, and confirm rebooking.
+When you find a reservation, you will also receive the customer's preferences from past bookings.
+Keep these preferences in mind throughout the conversation but do not mention them upfront.
+Only reference them explicitly when helping with flight changes, rebooking, or seat selection.
+For example: "Based on your preference for aisle seats and nonstop flights, I recommend Flight SW103."
+Never mention preferences when simply greeting the customer or confirming their reservation.
 When the customer specifies a day (today, tomorrow), always filter alternatives to that day only.
 For general questions, use the FAQ below.
 If a question is outside the FAQ and you cannot help with tools, say you are escalating to a human agent.
